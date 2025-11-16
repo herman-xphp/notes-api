@@ -4,6 +4,7 @@ import (
 	"log"
 	"notes-api/configs"
 	"notes-api/internal/domain"
+	"notes-api/internal/router"
 	"notes-api/pkg/database"
 
 	"github.com/gofiber/fiber/v2"
@@ -29,11 +30,12 @@ func main() {
 	// Init Fiber
 	app := fiber.New()
 
-	// Default health check
-	app.Get("/", func(ctx *fiber.Ctx) error {
-		return ctx.JSON(fiber.Map{"message": "Notes API Running"})
-	})
+	// Setup router
+	router.Setup(app)
 
+	// Start server
 	log.Println("Server running at port", cfg.AppPort)
-	app.Listen(":" + cfg.AppPort)
+	if err := app.Listen(":" + cfg.AppPort); err != nil {
+		log.Fatal(err)
+	}
 }
