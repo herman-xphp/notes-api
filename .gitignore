@@ -1,0 +1,50 @@
+# Binaries
+/bin/
+/build/
+/dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Go build cache
+*.out
+*.o
+
+# Go workspace
+go.work
+go.work.sum
+
+# Vendor
+/vendor/
+
+# Logs
+*.log
+
+# Environment files
+.env
+*.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Fiber specific (pid, tmp files)
+fiber.pid
+tmp/
+
+# Generated DB files (if any)
+*.db
+*.sqlite
+
+# Cache
+.cache/
