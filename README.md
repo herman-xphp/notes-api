@@ -383,7 +383,7 @@ Apache License 2.0 - See [LICENSE](./LICENSE) file
 
 ## Author
 
-**Herman** - Senior Backend Developer
+**Herman** - Backend Developer
 
 - Clean architecture enthusiast
 - Go expertise
