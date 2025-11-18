@@ -3,38 +3,52 @@ package impl
 import (
 	"context"
 	"errors"
+	apperrors "notes-api/internal/errors"
 	"notes-api/internal/domain"
 	"notes-api/internal/dto"
 	"notes-api/internal/repository"
 	"notes-api/internal/service"
 	"notes-api/internal/utils"
+	"strings"
+
+	"gorm.io/gorm"
 )
 
 type userServiceImpl struct {
 	userRepo repository.UserRepository
 }
 
-func NewUserService(userRepo repository.UserRepository) service.UserService {
+func NewUserServiceImpl(userRepo repository.UserRepository) service.UserService {
 	return &userServiceImpl{userRepo: userRepo}
 }
 
 // Register user
 func (s *userServiceImpl) Register(ctx context.Context, req dto.RegisterRequest) (*dto.AuthResponse, error) {
+	// Normalize email: lowercase and trim whitespace
+	normalizedEmail := strings.ToLower(strings.TrimSpace(req.Email))
+	
 	// Check if email already exists
-	existing, _ := s.userRepo.FindByEmail(ctx, req.Email)
+	existing, _ := s.userRepo.FindByEmail(ctx, normalizedEmail)
 	if existing != nil {
-		return nil, errors.New("email already exists")
+		// Generic error message to prevent email enumeration
+		return nil, apperrors.ErrInvalidCredentials
+	}
+
+	// Validate password strength
+	plainPassword := strings.TrimSpace(req.Password)
+	if !utils.ValidatePasswordStrength(plainPassword) {
+		return nil, apperrors.ErrWeakPassword
 	}
 
 	// Hash password
-	hash, err := utils.HashPassword(req.Password)
+	hash, err := utils.HashPassword(plainPassword)
 	if err != nil {
 		return nil, err
 	}
 
 	user := domain.User{
-		Name:     req.Name,
-		Email:    req.Email,
+		Name:     strings.TrimSpace(req.Name),
+		Email:    normalizedEmail,
 		Password: hash,
 	}
 
@@ -56,14 +70,23 @@ func (s *userServiceImpl) Register(ctx context.Context, req dto.RegisterRequest)
 }
 
 func (s *userServiceImpl) Login(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponse, error) {
-	user, err := s.userRepo.FindByEmail(ctx, req.Email)
+	// Normalize email: lowercase and trim whitespace
+	normalizedEmail := strings.ToLower(strings.TrimSpace(req.Email))
+	
+	user, err := s.userRepo.FindByEmail(ctx, normalizedEmail)
 	if err != nil {
-		return nil, errors.New("invalid email or password")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperrors.ErrInvalidCredentials
+		}
+		return nil, err
 	}
 
 	// Compare password
-	if !utils.CheckPasswordHash(req.Password, user.Password) {
-		return nil, errors.New("invalid email or password")
+	// Parameter: (hashedPassword, plainPassword)
+	// Trim whitespace from password input to avoid issues
+	plainPassword := strings.TrimSpace(req.Password)
+	if !utils.CheckPasswordHash(user.Password, plainPassword) {
+		return nil, apperrors.ErrInvalidCredentials
 	}
 
 	token, err := utils.GenerateJWT(user.ID, user.Email)

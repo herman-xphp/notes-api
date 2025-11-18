@@ -11,5 +11,5 @@ type NoteRepository interface {
 	Delete(ctx context.Context, id uint, userID uint) error
 
 	FindByID(ctx context.Context, id uint, userID uint) (*domain.Note, error)
-	FindAllByUser(ctx context.Context, userID uint) ([]domain.Note, error)
+	FindAllByUser(ctx context.Context, userID uint, page, limit int) ([]domain.Note, int64, error)
 }

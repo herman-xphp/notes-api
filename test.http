@@ -1,0 +1,149 @@
+### Notes API - HTTP Test File
+### Gunakan REST Client extension di VS Code atau IntelliJ untuk menjalankan request ini
+
+@baseUrl = http://localhost:8000
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo0LCJleHAiOjE3NjM0NDc2MDksImlhdCI6MTc2MzM2MTIwOX0.U4fbM42WmYJ2Pky9yuekwdTFp6RpXd_48JIioL0b6fg
+
+### ============================================
+### AUTH ENDPOINTS
+### ============================================
+
+### Register User
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test",
+  "email": "test@test.com",
+  "password": "test123456"
+}
+
+### Login User
+# @name login
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "test123456"
+}
+
+### ============================================
+### HEALTH CHECK
+### ============================================
+
+### Health Check
+GET {{baseUrl}}/health
+
+### ============================================
+### NOTES ENDPOINTS (Protected - Requires Auth)
+### ============================================
+
+### Create Note
+# Setelah login, copy token dari response dan paste di variable @token di atas
+POST {{baseUrl}}/api/v1/notes
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "My First Note",
+  "content": "This is the content of my first note"
+}
+
+### Get All Notes (with pagination)
+GET {{baseUrl}}/api/v1/notes?page=1&limit=10
+Authorization: Bearer {{token}}
+
+### Get All Notes (page 2)
+GET {{baseUrl}}/api/v1/notes?page=2&limit=10
+Authorization: Bearer {{token}}
+
+### Get All Notes (default - no params, uses page=1&limit=10)
+GET {{baseUrl}}/api/v1/notes
+Authorization: Bearer {{token}}
+
+### Get Note by ID
+# Ganti {id} dengan ID note yang valid
+GET {{baseUrl}}/api/v1/notes/1
+Authorization: Bearer {{token}}
+
+### Update Note
+# Ganti {id} dengan ID note yang valid
+# UpdateNoteRequest mendukung partial update (field optional)
+PUT {{baseUrl}}/api/v1/notes/2
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Updated Note Title",
+  "content": "Updated content"
+}
+
+### Update Note (Partial - hanya title)
+PUT {{baseUrl}}/api/v1/notes/2
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Only Title Updated"
+}
+
+### Update Note (Partial - hanya content)
+PUT {{baseUrl}}/api/v1/notes/2
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "content": "Only content updated"
+}
+
+### Delete Note
+# Ganti {id} dengan ID note yang valid
+DELETE {{baseUrl}}/api/v1/notes/2
+Authorization: Bearer {{token}}
+
+### ============================================
+### TEST SCENARIOS
+### ============================================
+
+### Test: Register dengan email yang sudah ada (should fail)
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "Jane Doe",
+  "email": "john@example.com",
+  "password": "password123"
+}
+
+### Test: Login dengan password salah (should fail)
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "wrongpassword"
+}
+
+### Test: Create Note tanpa token (should fail - 401)
+POST {{baseUrl}}/api/v1/notes
+Content-Type: application/json
+
+{
+  "title": "Unauthorized Note",
+  "content": "This should fail"
+}
+
+### Test: Get Note dengan ID yang tidak ada (should fail - 404)
+GET {{baseUrl}}/api/v1/notes/999
+Authorization: Bearer {{token}}
+
+### Test: Update Note milik user lain (should fail - not found)
+PUT {{baseUrl}}/api/v1/notes/999
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Trying to update someone else's note"
+}
+

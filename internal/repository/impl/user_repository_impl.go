@@ -2,6 +2,7 @@ package impl
 
 import (
 	"context"
+	"errors"
 	"notes-api/internal/domain"
 	"notes-api/internal/repository"
 
@@ -12,7 +13,7 @@ type userRepositoryImpl struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) repository.UserRepository {
+func NewUserRepositoryImpl(db *gorm.DB) repository.UserRepository {
 	return &userRepositoryImpl{db: db}
 }
 
@@ -20,6 +21,9 @@ func (r *userRepositoryImpl) FindByEmail(ctx context.Context, email string) (*do
 	var user domain.User
 	err := r.db.WithContext(ctx).Where("email = ?", email).Take(&user).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, gorm.ErrRecordNotFound
+		}
 		return nil, err
 	}
 
@@ -30,6 +34,9 @@ func (r *userRepositoryImpl) FindByID(ctx context.Context, id uint) (*domain.Use
 	var user domain.User
 	err := r.db.WithContext(ctx).Where("id = ?", id).Take(&user).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, gorm.ErrRecordNotFound
+		}
 		return nil, err
 	}
 
